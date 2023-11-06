@@ -14,7 +14,7 @@ router = APIRouter(
 config = dotenv_values("/etc/secrets/.exemple.env")
 stripe.api_key=config['STRIPE_SK'] # votre API KEY
 
-YOUR_DOMAIN = 'http://localhost'
+YOUR_DOMAIN = 'https://associapi.onrender.com/'
 
 @router.get('/checkout')
 async def stripe_checkout():

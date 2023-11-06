@@ -11,7 +11,7 @@ router = APIRouter(
     prefix='/stripe'
 )
 
-config = dotenv_values(".exemple.env")
+config = dotenv_values("/etc/secrets/.exemple.env")
 stripe.api_key=config['STRIPE_SK'] # votre API KEY
 
 YOUR_DOMAIN = 'http://localhost'

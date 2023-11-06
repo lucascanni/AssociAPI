@@ -4,7 +4,7 @@ import uuid
 from typing import List
 from database.firebase import db
 from routers.router_auth import get_current_user
-# from routers.router_stripe import increment_stripe
+from routers.router_stripe import increment_stripe
 
 router = APIRouter(
     prefix='/members',
@@ -21,6 +21,7 @@ async def get_all_members(user_data: int= Depends(get_current_user)):
 async def create_member(member: MemberCreate, user_data: int= Depends(get_current_user)):
     generatedId = str(uuid.uuid4())
     newMember = Member(id= generatedId, **member.model_dump())
+    # increment_stripe(user_data['uid'])
     return db.child('users').child(user_data['uid']).child("members").child(generatedId).set(newMember.model_dump(), token=user_data['idToken'])
 
 @router.get('/{id}', response_model=Member)

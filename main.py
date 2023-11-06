@@ -4,6 +4,7 @@ from fastapi import FastAPI
 # Import des routers
 from routers import router_members
 from routers import router_auth
+from routers import router_stripe
 
 # Import de la description de l'API
 from documentation.description import api_description
@@ -18,3 +19,4 @@ app = FastAPI(
 # Ajout des routers
 app.include_router(router_members.router)
 app.include_router(router_auth.router)
+app.include_router(router_stripe.router)

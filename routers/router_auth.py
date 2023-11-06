@@ -1,4 +1,4 @@
-from database.firebase import authStudent
+from database.firebase import authMember
 from firebase_admin import auth
 from fastapi import APIRouter, Depends, HTTPException
 from classes.schemas_dto import User
@@ -27,7 +27,7 @@ async def create_acount(user: User):
 @router.post('/login')
 async def create_swagger_token(user_credentials: OAuth2PasswordRequestForm = Depends()):
     try :
-        user = authStudent.sign_in_with_email_and_password(email=user_credentials.username, password=user_credentials.password)
+        user = authMember.sign_in_with_email_and_password(email=user_credentials.username, password=user_credentials.password)
         token = user['idToken']
         print(token)
         return {

@@ -7,3 +7,6 @@ firebase_admin.initialize_app(cred)
 
 firebase=pyrebase.initialize_app(firebaseConfig)
 db=firebase.database()
+
+#authentication
+authStudent = firebase.auth()

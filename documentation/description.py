@@ -5,7 +5,7 @@ AssociAPI helps you do awesome stuff. 🚀
 To get your access :
 - create a account on /auth/signup
 - login on /auth/login
-- redirection on [checkout](http://localhost:8000/stripe/checkout) to pay your subscription
+- redirection on [checkout](https://associapi.onrender.com/stripe/checkout) to pay your subscription
 
 ## Members
 

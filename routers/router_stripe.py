@@ -1,17 +1,21 @@
-from fastapi import APIRouter, Header, Request, Depends, Body
+from fastapi import APIRouter, Header, Request, Depends, Body, HTTPException
 from fastapi.responses import RedirectResponse
 import stripe
 from firebase_admin import auth
 from database.firebase import db
 from routers.router_auth import get_current_user
 from dotenv import dotenv_values
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 
 router = APIRouter(
     tags=["Stripe"],
     prefix='/stripe'
 )
 
-config = dotenv_values("/etc/secrets/.exemple.env")
+config = dotenv_values("/etc/secrets/.env")
+# config = dotenv_values(".env")
 stripe.api_key=config['STRIPE_SK'] # votre API KEY
 
 YOUR_DOMAIN = config['DOMAIN']
@@ -61,7 +65,10 @@ async def webhook_received(request:Request, stripe_signature: str = Header (None
         fireBase_user = auth.get_user_by_email(cust_email) # Identifiant firebase correspondant (uid)
         cust_id =event_data['object']['customer'] # Stripe ref du customer
         item_id= event_data['object']['lines']['data'][0]['subscription_item']
-        db.child("users").child(fireBase_user.uid).child("stripe").set({"item_id":item_id, "cust_id":cust_id}) # écriture dans la DB firebase      
+        start_date= datetime.now()
+        end_date= start_date + relativedelta(months=+1)
+
+        db.child("users").child(fireBase_user.uid).child("stripe").set({"item_id":item_id, "cust_id":cust_id,"end_date":end_date.isoformat(),"start_date":start_date.isoformat()}) # écriture dans la DB firebase      
 
     elif event_type == 'invoice.payment_failed':
         print('invoice payment failed')
@@ -77,10 +84,17 @@ async def stripe_usage(userData: int = Depends(get_current_user)):
     cust_id =stripe_data['cust_id']
     return stripe.Invoice.upcoming(customer=cust_id)
 
-def increment_stripe(userId:str):
+# Ne fonctionne pas car je fonctionne par abonnement
+def validation_abonnement(userId:str):
     fireBase_user = auth.get_user(userId) # Identifiant firebase correspondant (uid)
     stripe_data= db.child("users").child(fireBase_user.uid).child("stripe").get().val()
-    print(stripe_data.values())
-    item_id =stripe_data['item_id']
-    stripe.SubscriptionItem.create_usage_record(id=item_id, quantity=1)
-    return
+    if stripe_data is None:
+        raise HTTPException(status_code=401, detail="Aucun abonnement trouvé")
+    else:
+        date_request = datetime.now()
+        end_date = datetime.fromisoformat(stripe_data['end_date'])
+        if date_request < end_date:
+            return True
+        else:
+            raise HTTPException(status_code=401, detail="Abonnement expiré")
+        

@@ -11,7 +11,7 @@ colorama==0.4.6
 confusable-homoglyphs==3.2.0
 cryptography==41.0.4
 Deprecated==1.2.14
-Django==4.1.2
+Django==3.2.23
 django-filter==22.1
 django-registration==3.3
 djangorestframework==3.14.0

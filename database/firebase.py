@@ -4,8 +4,8 @@ from firebase_admin import credentials
 from dotenv import dotenv_values
 import json
 
-config = dotenv_values("/etc/secrets/.env")
-# config = dotenv_values(".env")
+# config = dotenv_values("/etc/secrets/.env")
+config = dotenv_values(".env")
 
 # cred = credentials.Certificate('configs/associapi_private_key.json')
 cred = firebase_admin.credentials.Certificate(json.loads(config['FIREBASE_SERVICE_ACCOUNT_KEY']))

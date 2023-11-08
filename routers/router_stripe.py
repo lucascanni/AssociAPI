@@ -14,8 +14,8 @@ router = APIRouter(
     prefix='/stripe'
 )
 
-config = dotenv_values("/etc/secrets/.env")
-# config = dotenv_values(".env")
+# config = dotenv_values("/etc/secrets/.env") 
+config = dotenv_values(".env")
 stripe.api_key=config['STRIPE_SK'] # votre API KEY
 
 YOUR_DOMAIN = config['DOMAIN']
@@ -43,7 +43,7 @@ async def stripe_checkout():
   
     
 @router.post('/webhook')
-async def webhook_received(request:Request, stripe_signature: str = Header (None)):
+async def webhook_received(request:Request, stripe_signature: str = Header (None), user_data: int = Depends(get_current_user)):
     webhook_secret = config['WEBHOOK_SECRET']
     data = await request.body()
     try:
@@ -62,13 +62,21 @@ async def webhook_received(request:Request, stripe_signature: str = Header (None
     elif event_type == 'invoice.paid':
         print('invoice paid')
         cust_email = event_data['object']['customer_email'] # email de notre customer
-        fireBase_user = auth.get_user_by_email(cust_email) # Identifiant firebase correspondant (uid)
+        # fireBase_user = auth.get_user_by_email(cust_email) # Identifiant firebase correspondant (uid)
         cust_id =event_data['object']['customer'] # Stripe ref du customer
         item_id= event_data['object']['lines']['data'][0]['subscription_item']
         start_date= datetime.now()
         end_date= start_date + relativedelta(months=+1)
-
-        db.child("users").child(fireBase_user.uid).child("stripe").set({"item_id":item_id, "cust_id":cust_id,"end_date":end_date.isoformat(),"start_date":start_date.isoformat()}) # écriture dans la DB firebase      
+        
+        stripe_data = {
+            'cust_id': cust_id,
+            'item_id': item_id,
+            'start_date': start_date.isoformat(),
+            'end_date': end_date.isoformat()
+        }
+        # db.child("users").child(fireBase_user.uid).child("stripe").set(stripe_data, token=fireBase_user.id_token)
+        db.child("users").child(user_data['uid']).child("stripe").set(stripe_data, token=user_data['idToken'])
+            
 
     elif event_type == 'invoice.payment_failed':
         print('invoice payment failed')
@@ -78,8 +86,8 @@ async def webhook_received(request:Request, stripe_signature: str = Header (None
     return {"status": "success"}
 
 @router.get('/usage')
-async def stripe_usage(userData: int = Depends(get_current_user)):
-    fireBase_user = auth.get_user(userData['uid']) # Identifiant firebase correspondant (uid)
+async def stripe_usage(user_data: int = Depends(get_current_user)):
+    fireBase_user = auth.get_user(user_data['uid']) # Identifiant firebase correspondant (uid)
     stripe_data= db.child("users").child(fireBase_user.uid).child("stripe").get().val()
     cust_id =stripe_data['cust_id']
     return stripe.Invoice.upcoming(customer=cust_id)

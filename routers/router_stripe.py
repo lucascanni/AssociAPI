@@ -43,7 +43,7 @@ async def stripe_checkout():
   
     
 @router.post('/webhook')
-async def webhook_received(request:Request, stripe_signature: str = Header (None), user_data: int = Depends(get_current_user)):
+async def webhook_received(request:Request, stripe_signature: str = Header (None)):
     webhook_secret = config['WEBHOOK_SECRET']
     data = await request.body()
     try:
@@ -62,7 +62,7 @@ async def webhook_received(request:Request, stripe_signature: str = Header (None
     elif event_type == 'invoice.paid':
         print('invoice paid')
         cust_email = event_data['object']['customer_email'] # email de notre customer
-        # fireBase_user = auth.get_user_by_email(cust_email) # Identifiant firebase correspondant (uid)
+        fireBase_user = auth.get_user_by_email(cust_email) # Identifiant firebase correspondant (uid)
         cust_id =event_data['object']['customer'] # Stripe ref du customer
         item_id= event_data['object']['lines']['data'][0]['subscription_item']
         start_date= datetime.now()
@@ -74,8 +74,8 @@ async def webhook_received(request:Request, stripe_signature: str = Header (None
             'start_date': start_date.isoformat(),
             'end_date': end_date.isoformat()
         }
-        # db.child("users").child(fireBase_user.uid).child("stripe").set(stripe_data, token=fireBase_user.id_token)
-        db.child("users").child(user_data['uid']).child("stripe").set(stripe_data, token=user_data['idToken'])
+        db.child("users").child(fireBase_user.uid).child("stripe").set(stripe_data, token=fireBase_user.id_token)
+        # db.child("users").child(user_data['uid']).child("stripe").set(stripe_data, token=user_data['idToken'])
             
 
     elif event_type == 'invoice.payment_failed':

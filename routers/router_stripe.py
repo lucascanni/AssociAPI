@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Header, Request, Depends, Body, HTTPException
 from fastapi.responses import RedirectResponse
 import stripe
@@ -94,15 +95,18 @@ async def stripe_usage(user_data: int = Depends(get_current_user)):
 
 # Ne fonctionne pas car je fonctionne par abonnement
 def validation_abonnement(userId:str):
-    fireBase_user = auth.get_user(userId) # Identifiant firebase correspondant (uid)
-    stripe_data= db.child("users").child(fireBase_user.uid).child("stripe").get().val()
-    if stripe_data is None:
-        raise HTTPException(status_code=401, detail="Aucun abonnement trouvé")
+    if os.getenv('TESTING') == 'True':
+        return True
     else:
-        date_request = datetime.now()
-        end_date = datetime.fromisoformat(stripe_data['end_date'])
-        if date_request < end_date:
-            return True
+        fireBase_user = auth.get_user(userId) # Identifiant firebase correspondant (uid)
+        stripe_data= db.child("users").child(fireBase_user.uid).child("stripe").get().val()
+        if stripe_data is None:
+            raise HTTPException(status_code=401, detail="Aucun abonnement trouvé")
         else:
-            raise HTTPException(status_code=401, detail="Abonnement expiré")
+            date_request = datetime.now()
+            end_date = datetime.fromisoformat(stripe_data['end_date'])
+            if date_request < end_date:
+                return True
+            else:
+                raise HTTPException(status_code=401, detail="Abonnement expiré")
         

@@ -25,9 +25,11 @@ async def create_member(member: MemberCreate, user_data: int= Depends(get_curren
     newMember = Member(id= generatedId, **member.model_dump())
     est_valide=validation_abonnement(user_data['uid'])
     if est_valide:
-        return db.child('users').child(user_data['uid']).child("members").child(generatedId).set(newMember.model_dump(), token=user_data['idToken'])
+        db.child('users').child(user_data['uid']).child("members").child(generatedId).set(newMember.model_dump(), token=user_data['idToken'])
+        return newMember
     else:
         raise HTTPException(status_code=401, detail="Aucun abonnement trouvé ou abonnement expiré")
+    
 
 @router.get('/{id}', response_model=Member)
 async def get_member_by_id(id: str, user_data: int= Depends(get_current_user)):
